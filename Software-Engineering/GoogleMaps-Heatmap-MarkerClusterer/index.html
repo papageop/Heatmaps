@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Paraskevi Papageorgiou">
+   
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Χωροχρονική Ανάλυση Δεδομένων Ασύρματου Δικτύου</title>
+    <!--
+    <meta http-equiv="refresh" content="10" >-->
+    <style>
+      /* to have the map be displayed as large as possible */
+      html, body, #map-div {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=visualization"></script>
+    
+  </head>
+ 
+  <body>
+    <div id="map-div" ></div>
+
+    <script>
+      //variable that stores the locations of the routers (latitude and longtitude) and the number of connected users (weight) in json format
+      var locations = 
+        {
+            "router1":{"latitude": 40.6298415,
+            "longtitude": 22.9588935,
+             "weight": 15},
+             "router2":
+            {"latitude": 40.6332769, "longtitude": 22.9578008, "weight":74},
+            "router3":{"latitude": 40.6328974, "longtitude": 22.9577312,"weight":60}, 
+            "router4":{"latitude": 40.6323397, "longtitude": 22.9564416,"weight":43},  
+            "router5":{"latitude": 40.628322, "longtitude":22.959265,"weight":100}, 
+            "router6":{"latitude": 40.627906, "longtitude": 22.959826,"weight":24}, 
+            "router7":{"latitude": 40.6298415, "longtitude": 22.9588107 ,"weight":48},
+            "router8": {"latitude": 40.632135, "longtitude": 22.958746 ,"weight":85},
+            "router9":{"latitude":40.631806,"longtitude":22.954801,"weight":27},
+            "router10":{"latitude":40.633565,"longtitude":22.957249,"weight":32},
+            "router11":{"latitude":40.630682,"longtitude":22.960787,"weight":46},
+            "router12":{"latitude":40.627412,"longtitude":22.961508,"weight":90}
+            
+        
+        }
+            
+        //function that initializes the map 
+        function initMap() {
+          //creates the map with the options for the map type, zoom and point of the map to be chosen as centre
+          var mapOptions={
+                zoom: 17,
+                center: {lat: 40.631125, lng: 22.958078},
+                mapTypeId: google.maps.MapTypeId.MAP
+            };
+
+            //creates new google map
+            var map = new google.maps.Map(document.getElementById('map-div'), mapOptions);
+            
+            let markers=[] //array that will store the markers of the map
+
+
+            Object.keys(locations).forEach(function(marker) //reads the json and stores locations and weights on markers
+            {
+              var temp=locations[marker]
+              markers.push([temp.latitude,temp.longtitude,temp.weight])
+            
+              return markers
+            })
+           let matrix=[]
+          for (var i = 0; i < markers.length;++i) {
+              matrix.push({location: new google.maps.LatLng(markers[i][0],markers[i][1]), weight: markers[i][2]});
+              console.log(matrix[i])
+              markers[i]=new google.maps.Marker({position:new google.maps.LatLng(markers[i][0],markers[i][1]),weight:markers[i][2],title:'number of connected users: '+markers[i][2]});
+        }
+
+        //function that calculates
+        var calc=function(markers, numStyles) {
+          var weight=0;
+          
+          for(var i=0;i<markers.length;++i){
+            weight+=markers[i].weight;
+          }
+          //console.log(String(weight).length,numStyles)
+          
+            return {
+            text: weight,
+            index: Math.min(String(weight).length, numStyles)
+          };
+        }
+        
+        
+        //initialize markerclusterer 
+        var markerCluster = new MarkerClusterer(map,markers,
+        {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'}
+        ); 
+        //sets calculator
+            markerCluster.setCalculator(calc);
+
+            //adds the markers
+            markerCluster.addMarkers(markers)
+            
+            // Constructs a heat map overlay
+
+			var heatmap = new google.maps.visualization.HeatmapLayer({
+				data: matrix,
+        radius: 30
+			});
+// placing the heatmap on the map
+heatmap.setMap(map);
+        }
+
+
+        google.maps.event.addDomListener(window, 'load', initMap);
+        
+        
+        
+    </script>
+    <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
+    
+
+
+
+    <!-- this is where the map finally is drawn onto 
+    <div id="map-canvas"></div>
+
+    <script>
+      var map, pointarray, heatmap;
+      
+      async function getData() 
+              {
+                  //await the response of the fetch call
+                 let response = await fetch('https://ws-ext.it.auth.gr/open/getUnitsPeople');
+                  //proceed once the first promise is resolved.
+                 let data = await response.json()
+                  //proceed only when the second promise is resolved
+                  
+                  return data;
+              }
+      //call getData function
+      getData()
+      .then(data => console.log(data));//log the data
+      var data = [
+      { latitude: 40.416775,longitude: -3.70379, weight: 6 },
+      { latitude: 41.385064,longitude: 2.173403, weight: 15 },
+      { latitude: 52.130661,longitude: -3.783712, weight: 2 },
+      { latitude: 55.378051,longitude: -3.435973, weight: 15 },
+      { latitude: -40.900557,longitude: 174.885971, weight: 6 },
+      { latitude: 40.714353,longitude: -74.005973, weight: 6 }
+        // ...
+      ];
+      // a shortened version of the data for Google's taxi example
+      var taxiData = [
+      { location: new google.maps.LatLng(40.416775, -3.70379) },
+      { location: new google.maps.LatLng(41.385064, 2.173403)},
+      { location: new google.maps.LatLng(52.130661, -3.783712)},
+      { location: new google.maps.LatLng(55.378051, -3.435973)},
+      { location: new google.maps.LatLng(-40.900557, 174.885971)},
+      { location: new google.maps.LatLng(40.714353, -74.005973)}
+        // ...
+      ];
+       
+       
+      function initialize() {
+        // the map's options
+        var mapOptions = {
+          zoom: 16,
+      center: new google.maps.LatLng(40.630370, 22.960889),
+          mapTypeId: google.maps.MapTypeId.SATELLITE
+        };
+       
+        // the map and where to place it
+        map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+       
+       
+        // what data for the heatmap and how to display it
+        heatmap = new google.maps.visualization.HeatmapLayer({
+          data: taxiData,
+          radius: 25
+        });
+       
+        // placing the heatmap on the map
+        heatmap.setMap(map);
+      }
+      
+            
+       
+      // as soon as the document is ready the map is initialized
+      google.maps.event.addDomListener(window, 'load', initialize);
+       
+          </script>-->
+  </body>
+</html>

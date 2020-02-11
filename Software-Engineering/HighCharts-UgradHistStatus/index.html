@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Paraskevi Papageorgiou">
+    <!--
+    <meta http-equiv="refresh" content="10" >-->
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/heatmap.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/data.js"></script>
+<script src="https://code.highcharts.com/modules/boost-canvas.js"></script>
+<script src="https://code.highcharts.com/modules/boost.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <title>Χωροχρονική Ανάλυση Δεδομένων Ασύρματου Δικτύου</title>
+</head>
+<body>
+  <div>
+    <h1></h1>
+    
+</div>
+<hr>
+
+<div id="container" style="height: 400px"></div>
+<script>
+ fetchAPIData()
+ function getPointCategoryName(point, dimension) {
+    var series = point.series,
+        isY = dimension === 'y',
+        axis = series[isY ? 'yAxis' : 'xAxis'];
+    return axis.categories[point[isY ? 'y' : 'x']];
+}
+  function fetchAPIData(){
+    let department=[], years=[], students=[] //matrices that store the departments, years and students that get accepted by a department each year
+      fetch('https://ws-ext.it.auth.gr/open/getUgradHistStatus')
+          .then(response => response.json()) //returns the response of the server in json format
+          .then(users => {   
+                    let array=users.ugradhiststatus //gets the field ugradhiststatus which contains all the data
+                    let i=0,j=0 //counters
+                    Object.keys(array).forEach(function(dep) { //loops through the Object to get all departments
+                        department.push(dep)
+                        year=array[dep]
+                        Object.keys(year).forEach(function(temp)//loops through the Object to get all department's students each year
+                        {
+                            years.push(temp)
+                        students.push([i,j,year[temp]])
+                            j++;
+                        })
+                        i++;
+                        j=0;
+                    });
+                       
+                    
+                   
+                    Highcharts.chart('container', {
+
+
+
+chart: {
+    type: 'heatmap'
+},
+
+boost: {
+    useGPUTranslations: true
+},
+
+title: {
+    text: 'Highcharts heatmap',
+    align: 'left',
+    x: 40
+},
+
+subtitle: {
+    text: 'Αριθμός εισαχθέντων φοιτητών ανά τμήμα και ανά έτος για τα τελευταία δέκα έτη',
+    align: 'left',
+    x: 40
+},
+
+xAxis: {
+    
+    categories: department,
+    showLastLabel: true,
+    tickLength: 16
+},
+
+yAxis: {
+    title: {
+        text: null
+    },
+  
+    minPadding: 0,
+    maxPadding: 0,
+    startOnTick: false,
+    endOnTick: false,
+    
+    tickWidth: 1,
+    categories: years,
+    reversed: true
+},
+
+colorAxis: {
+    stops: [
+        [0, '#3060cf'],
+        [0.5, '#fffbbc'],
+        [0.9, '#c4463a'],
+        [1, '#c4463a']
+    ],
+    min: 0,
+    max: 750,
+    startOnTick: false,
+    endOnTick: false
+    
+},
+
+tooltip: {
+        formatter: function () {
+            return '<b>' + getPointCategoryName(this.point, 'x') + '</b> accepted <br><b>' +
+                this.point.value + '</b> students on <br><b>' + getPointCategoryName(this.point, 'y') + '</b>';
+        }
+    },
+series: [{
+    data: students,
+    boostThreshold: 100,
+    borderWidth: 0,
+    nullColor: '#EFEFEF',
+   // colsize: 24 * 36e5, // one day
+   dataLabels: {
+            enabled: true,
+            color: '#000000'
+        }
+}],
+accessibility: {
+        point: {
+            descriptionFormatter: function (point) {
+                var ix = point.index + 1,
+                    xName = getPointCategoryName(point, 'x'),
+                    yName = getPointCategoryName(point, 'y'),
+                    val = point.value;
+                return ix + '. ' + xName + ' sales ' + yName + ', ' + val + '.';
+            }
+        }
+    }
+
+
+});
+        })}
+        
+</script>
+
+<style>
+.highcharts-figure, .highcharts-data-table table {
+    min-width: 360px; 
+    max-width: 1000px;
+    margin: 1em auto;
+}
+
+.highcharts-data-table table {
+	font-family: Verdana, sans-serif;
+	border-collapse: collapse;
+	border: 1px solid #EBEBEB;
+	margin: 10px auto;
+	text-align: center;
+	width: 100%;
+	max-width: 500px;
+}
+.highcharts-data-table caption {
+    padding: 1em 0;
+    font-size: 1.2em;
+    color: #555;
+}
+.highcharts-data-table th {
+	font-weight: 600;
+    padding: 0.5em;
+}
+.highcharts-data-table td, .highcharts-data-table th, .highcharts-data-table caption {
+    padding: 0.5em;
+}
+.highcharts-data-table thead tr, .highcharts-data-table tr:nth-child(even) {
+    background: #f8f8f8;
+}
+.highcharts-data-table tr:hover {
+    background: #f1f7ff;
+}
+
+</style>
+</body>
+</html>
